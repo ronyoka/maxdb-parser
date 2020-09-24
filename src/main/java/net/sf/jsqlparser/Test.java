@@ -15,7 +15,7 @@ import net.sf.jsqlparser.statement.Statements;
 public class Test {
 
   public static void main(String[] args) {
-    parseStatement("alter table it_task_review drop primary key");
+    parseStatement("alter table code_change_target add column package boolean default false not null");
 
   }
 

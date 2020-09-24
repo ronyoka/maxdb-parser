@@ -69,6 +69,7 @@ import net.sf.jsqlparser.statement.alter.AlterExpression.ColumnDataType;
 public class CCJSqlParser {
     int jdbcParameterIndex = 0;
     boolean errorRecovery = false;
+    private static boolean logDisabled = false;
     List<ParseException> parseErrors = new ArrayList<ParseException>();
 
     public CCJSqlParser withSquareBracketQuotation(boolean allowSquareBracketQuotation) {
@@ -91,6 +92,13 @@ public class CCJSqlParser {
 
     public List<ParseException> getParseErrors() {
         return parseErrors;
+    }
+
+    public static void log(String info){
+      if(logDisabled){
+        return;
+      }
+      System.out.println(info);
     }
 }
 
@@ -4335,6 +4343,7 @@ AlterView AlterView():
     { return alterView; }
 }
 
+
 List<String> CreateParameter():
 {
     String retval = "";
@@ -4344,28 +4353,33 @@ List<String> CreateParameter():
     Expression exp = null;
     List<String> param = new ArrayList<String>();
     ColDataType colDataType;
+    CCJSqlParser.log("CreateParameter");
 }
 {
         (
-            (((tk=<S_IDENTIFIER> | tk=<S_QUOTED_IDENTIFIER>) { identifier.append(tk.image); }
+            (((tk=<S_IDENTIFIER> | tk=<S_QUOTED_IDENTIFIER>) { identifier.append(tk.image);  CCJSqlParser.log("S_IDENTIFIER " + tk.image);}
                 ["." (tk2=<S_IDENTIFIER> | tk2=<S_QUOTED_IDENTIFIER>) { identifier.append("."); identifier.append(tk2.image); }])
                 { param.add(identifier.toString()); })
             |
-            tk=<K_NULL> { param.add(tk.image); }
+            tk=<K_NULL> { param.add(tk.image); CCJSqlParser.log("K_NULL");}
             |
-            tk=<K_NOT> { param.add(tk.image); }
+            tk=<K_NOT> { param.add(tk.image); CCJSqlParser.log("K_NOT");}
             |
-            tk=<K_PRIMARY> { param.add(tk.image); }
+            tk=<K_FALSE> { param.add(tk.image); CCJSqlParser.log("K_FALSE");}
             |
-            tk=<K_DEFAULT> { param.add(tk.image); }
+            tk=<K_TRUE> { param.add(tk.image); CCJSqlParser.log("K_TRUE");}
             |
-            tk=<K_FOREIGN> { param.add(tk.image); }
+            tk=<K_PRIMARY> { param.add(tk.image); CCJSqlParser.log("K_PRIMARY");}
             |
-            tk=<K_REFERENCES> { param.add(tk.image); }
+            (tk=<K_DEFAULT> { param.add(tk.image); CCJSqlParser.log("K_DEFAULT " + tk.image);})
             |
-            tk=<K_KEY> { param.add(tk.image); }
+            tk=<K_FOREIGN> { param.add(tk.image); CCJSqlParser.log("K_FOREIGN " + tk.image);}
             |
-            tk=<S_CHAR_LITERAL> { param.add(tk.image); }
+            tk=<K_REFERENCES> { param.add(tk.image); CCJSqlParser.log("K_REFERENCES " + tk.image);}
+            |
+            tk=<K_KEY> { param.add(tk.image); CCJSqlParser.log("K_KEY " + tk.image);}
+            |
+            tk=<S_CHAR_LITERAL> { param.add(tk.image); CCJSqlParser.log("S_CHAR_LITERAL " + tk.image);}
             |
               ("+" {retval = "+";} | "-" {retval = "-";})?
               (
@@ -4375,19 +4389,19 @@ List<String> CreateParameter():
               )
               { param.add(retval); }
             |
-            tk=<K_ON> { param.add(tk.image); }
+            tk=<K_ON> { param.add(tk.image); CCJSqlParser.log("K_ON " + tk.image);}
             |
-            tk=<K_COMMIT> { param.add(tk.image); }
+            tk=<K_COMMIT> { param.add(tk.image); CCJSqlParser.log("K_COMMIT " + tk.image);}
             |
-            tk=<K_ROWS> { param.add(tk.image); }
+            tk=<K_ROWS> { param.add(tk.image); CCJSqlParser.log("K_DEFAULT " + tk.image);}
             |
-            tk=<K_UNIQUE> { param.add(tk.image); }
+            tk=<K_UNIQUE> { param.add(tk.image); CCJSqlParser.log("K_DEFAULT " + tk.image);}
             |
-            tk=<K_CASCADE> { param.add(tk.image); }
+            tk=<K_CASCADE> { param.add(tk.image); CCJSqlParser.log("K_DEFAULT " + tk.image);}
             |
-            tk=<K_DELETE> { param.add(tk.image); }
+            tk=<K_DELETE> { param.add(tk.image); CCJSqlParser.log("K_DEFAULT " + tk.image);}
             |
-            tk=<K_UPDATE> { param.add(tk.image); }
+            tk=<K_UPDATE> { param.add(tk.image); CCJSqlParser.log("K_DEFAULT " + tk.image);}
             |
             tk=<K_TIME_KEY_EXPR> { param.add(new TimeKeyExpression(tk.image).toString()); }
             |
@@ -4397,7 +4411,7 @@ List<String> CreateParameter():
             |
             <K_TABLESPACE> retval=RelObjectName() { param.add("TABLESPACE"); param.add(retval); }
             |
-            retval=AList() { param.add(retval); }
+            retval=AList() { param.add(retval); CCJSqlParser.log("retval " + retval);}
             |
             <K_CHECK>  ("(" exp = Expression() ")") { param.add("CHECK"); param.add("(" + exp.toString() + ")");}
             |
@@ -4433,7 +4447,7 @@ List<String> CreateParameter():
 	        |
             tk=<K_DESC> { param.add(tk.image); }
             |
-	    tk="::" colDataType = ColDataType() { param.add(tk.image); param.add(colDataType.toString()); }
+	    tk="::" colDataType = ColDataType() { param.add(tk.image); param.add(colDataType.toString()); CCJSqlParser.log("colDataType " + tk.image);}
         )
     {return param;}
 }
@@ -4631,6 +4645,7 @@ AlterExpression AlterExpression():
     AlterExpression alterExp = new AlterExpression();
     Token tk;
     String fkn = null;
+    String defaultValue = null;
     Token tk2 = null;
     String sk3 = null;
     String sk4 = null;
@@ -4649,11 +4664,12 @@ AlterExpression AlterExpression():
     (
         ((<K_ADD>    { alterExp.setOperation(AlterOperation.ADD); } | <K_ALTER>    { alterExp.setOperation(AlterOperation.ALTER); } | <K_MODIFY> { alterExp.setOperation(AlterOperation.MODIFY); })
         (
-                  LOOKAHEAD(2) (
-                      <K_PRIMARY> <K_KEY> columnNames=ColumnsNamesList() { alterExp.setPkColumns(columnNames); }
-                  ) constraints=AlterExpressionConstraintState() { alterExp.setConstraints(constraints); }
-                  [<K_USING> sk4=RelObjectName() { alterExp.addParameters("USING", sk4); }]
-                  |
+            LOOKAHEAD(2)
+              (
+                <K_PRIMARY> <K_KEY> columnNames=ColumnsNamesList() { alterExp.setPkColumns(columnNames); }
+              ) constraints=AlterExpressionConstraintState() { alterExp.setConstraints(constraints); }
+                [<K_USING> sk4=RelObjectName() { alterExp.addParameters("USING", sk4); }]
+              |
             LOOKAHEAD(2) (
               (tk=<K_KEY> { alterExp.setUk(true); } | tk=<K_INDEX>)
               sk3 = RelObjectName()
@@ -4665,7 +4681,7 @@ AlterExpression AlterExpression():
               constraints=AlterExpressionConstraintState() { alterExp.setConstraints(constraints); }
               [<K_USING> sk4=RelObjectName() { alterExp.addParameters("USING", sk4); }]
             )
-                    |
+            |
             LOOKAHEAD(3) ( (LOOKAHEAD(2) <K_COLUMN>)?
                 (LOOKAHEAD(2) alterExpressionColumnDataType = AlterExpressionColumnDataType() { alterExp.addColDataType(alterExpressionColumnDataType); }
                 |

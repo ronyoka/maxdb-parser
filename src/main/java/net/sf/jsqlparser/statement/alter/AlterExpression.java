@@ -56,6 +56,7 @@ public class AlterExpression {
   private List<ConstraintState> constraints;
   private List<String> parameters;
   private String commentText;
+  private String defaultValue;
 
   public String getCommentText() {
     return commentText;
@@ -683,5 +684,13 @@ public class AlterExpression {
       return columnName + " DROP"
           + (withNot ? " NOT " : " ") + "NULL";
     }
+  }
+
+  public String getDefaultValue() {
+    return defaultValue;
+  }
+
+  public void setDefaultValue(String defaultValue) {
+    this.defaultValue = defaultValue;
   }
 }
