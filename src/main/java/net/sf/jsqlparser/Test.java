@@ -15,7 +15,15 @@ import net.sf.jsqlparser.statement.Statements;
 public class Test {
 
   public static void main(String[] args) {
-    parseStatement("alter table code_change_target add column package boolean default false not null");
+    parseStatement("create table code_change_target\n"
+        + "(\n"
+        + "    groupid         groupid key,\n"
+        + "    notification_id code_change_notif_id key,\n"
+        + "    target_id       fixed(6) key,\n"
+        + "    folder_name     varchar(800) ascii,\n"
+        + "    file_name       varchar(200) ascii,\n"
+        + "    foreign key f_code_change_notification (groupid, notification_id) references code_change_notification (groupid, notification_id)\n"
+        + ")");
 
   }
 

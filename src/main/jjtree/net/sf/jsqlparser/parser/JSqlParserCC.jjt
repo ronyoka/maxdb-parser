@@ -4161,6 +4161,7 @@ CreateTable CreateTable():
                     }
                     [<K_CONSTRAINT> sk3=RelObjectName() {fkIndex.setName(sk3);} ]
                     tk=<K_FOREIGN> tk2=<K_KEY>
+                        [sk3=RelObjectName() {fkIndex.setFkName(sk3);} ]
                         /* colNames=ColumnsNamesList() */
                         colNames = ColumnNamesWithParamsList()
                         {

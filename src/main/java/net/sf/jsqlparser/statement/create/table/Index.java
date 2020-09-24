@@ -26,6 +26,8 @@ public class Index {
     private final List<String> name = new ArrayList<>();
     private List<String> idxSpec;
 
+    private String fkName;
+
     public List<String> getColumnsNames() {
         return columns.stream()
                       .map(col -> col.columnName)
@@ -152,6 +154,14 @@ public class Index {
     public Index withName(String name) {
         this.setName(name);
         return this;
+    }
+
+    public String getFkName() {
+        return fkName;
+    }
+
+    public void setFkName(String fkName) {
+        this.fkName = fkName;
     }
 
     public static class ColumnParams {
