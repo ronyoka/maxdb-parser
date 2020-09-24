@@ -25,6 +25,7 @@ public class Drop implements Statement {
   private Table name;
   private List<String> parameters;
   private boolean ifExists = false;
+  private boolean onKeyword = false;
 
   @Override
   public void accept(StatementVisitor statementVisitor) {
@@ -66,7 +67,9 @@ public class Drop implements Statement {
   @Override
   public String toString() {
     String sql = "DROP " + type + " "
-        + (ifExists ? "IF EXISTS " : "") + name.toString();
+        + (ifExists ? "IF EXISTS " : "")
+        + name.toString()
+        + (onKeyword ? " ON" : "");
 
     if (parameters != null && !parameters.isEmpty()) {
       sql += " " + PlainSelect.getStringList(parameters);
@@ -105,5 +108,13 @@ public class Drop implements Statement {
     List<String> collection = Optional.ofNullable(getParameters()).orElseGet(ArrayList::new);
     collection.addAll(parameters);
     return this.withParameters(collection);
+  }
+
+  public boolean isOnKeyword() {
+    return onKeyword;
+  }
+
+  public void setOnKeyword(boolean onKeyword) {
+    this.onKeyword = onKeyword;
   }
 }

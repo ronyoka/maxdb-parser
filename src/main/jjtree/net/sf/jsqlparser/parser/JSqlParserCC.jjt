@@ -4540,8 +4540,8 @@ Drop Drop():
     { drop.setType(tk.image); }
 
     [ LOOKAHEAD(2) <K_IF> <K_EXISTS> {drop.setIfExists(true);} ]
-
     name = Table() { drop.setName(name); }
+    [ <K_ON> {drop.setOnKeyword(true);} ]
     ((tk=<S_IDENTIFIER> | tk=<K_CASCADE> | tk=<K_RESTRICT> ) { dropArgs.add(tk.image); })*
 
     {
